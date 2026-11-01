@@ -17,29 +17,43 @@
 	let active = $state(0);
 	let progress = $state(0);
 
-	// Scrollama drives `active` (the scene in view) and `progress` (0 to 1 inside that scene).
+	// Scrollama tells us which scene is in view (`active`). `progress` (0 to 1 across that scene's step) is
+	// measured from the scroll position itself, so it is right even after a fast scroll or when scrolling back.
 	// Scene components read these two values and never look at the scroll position themselves.
+	const OFFSET = 0.6; // the line, as a share of the viewport height, where a step becomes active
 	onMount(() => {
 		let scroller;
 		let cancelled = false;
+		let frame = 0;
+		const measure = () => {
+			frame = 0;
+			const el = document.querySelectorAll('.step')[active];
+			if (!el) return;
+			const r = el.getBoundingClientRect();
+			progress = Math.max(0, Math.min(1, (innerHeight * OFFSET - r.top) / r.height));
+		};
+		const schedule = () => {
+			if (!frame) frame = requestAnimationFrame(measure);
+		};
 		import('scrollama').then(({ default: scrollama }) => {
 			if (cancelled) return;
 			scroller = scrollama();
-			scroller
-				.setup({ step: '.step', offset: 0.6, progress: true })
-				.onStepEnter(({ index }) => {
-					active = index;
-					progress = 0;
-				})
-				.onStepProgress(({ index, progress: p }) => {
-					if (index === active) progress = p;
-				});
+			scroller.setup({ step: '.step', offset: OFFSET }).onStepEnter(({ index }) => {
+				active = index;
+				measure();
+			});
 		});
-		const onResize = () => scroller?.resize();
+		const onResize = () => {
+			scroller?.resize();
+			schedule();
+		};
 		window.addEventListener('resize', onResize);
+		window.addEventListener('scroll', schedule, { passive: true });
 		return () => {
 			cancelled = true;
+			cancelAnimationFrame(frame);
 			window.removeEventListener('resize', onResize);
+			window.removeEventListener('scroll', schedule);
 			scroller?.destroy();
 		};
 	});
@@ -83,7 +97,7 @@
 
 		<div class="steps">
 			{#each steps as s, i (s.id)}
-				<article class="step" class:on={i === active}>
+				<article class="step" class:on={i === active} class:tall={s.tall}>
 					<div class="card">
 						<p class="role">{s.role}</p>
 						<h2>{s.title}</h2>
@@ -148,11 +162,11 @@
 		transition: opacity 0.4s ease;
 	}
 	.step.on .card { opacity: 1; }
+	.step.tall { min-height: 160vh; align-items: flex-start; }
+	.step.tall .card { position: sticky; top: 30vh; }
 	.role { font-family: var(--font-title); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--seq-4); margin: 0 0 6px; }
 	h2 { font-family: var(--font-title); font-size: 1.5rem; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
 	.card p:last-child { margin: 0; line-height: 1.55; }
-	footer { padding: 24px 32px 48px; }
-	footer a { color: var(--ink-2); }
 	@media (prefers-reduced-motion: reduce) {
 		.layer, .card { transition: none; }
 	}

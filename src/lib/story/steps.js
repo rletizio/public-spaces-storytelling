@@ -1,4 +1,5 @@
 // The twelve scenes of the story. Text follows prompt/Storytelling Structure.md.
+// `tall` gives a scene extra scrolling room (its text card stays put) for highlights that appear mid-scene.
 // `visual` describes what the sticky stage shows; the real visualizations replace the placeholders scene by scene.
 export const steps = [
 	{
@@ -38,6 +39,7 @@ export const steps = [
 	},
 	{
 		id: 'order',
+		tall: true,
 		role: 'Rising',
 		title: 'Let us order all the spaces by size.',
 		body: 'The ten largest spaces hold 43% of all the public space area.',
@@ -45,6 +47,7 @@ export const steps = [
 	},
 	{
 		id: 'access',
+		tall: true,
 		role: 'Rising',
 		title: 'But size is not access.',
 		body: 'Half of all spaces are under half an acre, and how many people live near a space has almost nothing to do with how big it is. Christian Science Plaza is accessible to more than 25 thousand people, almost as many as Franklin Park, which is 57 times larger.',

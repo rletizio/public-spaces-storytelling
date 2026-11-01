@@ -93,8 +93,8 @@
 	// ---- hover ----
 	let wrap = $state();
 	let svg = $state();
-	let hover = $state(null);
-	let tip = $state({ left: 0, top: 0, flip: false });
+	let hover = $state.raw(null);
+	let tip = $state.raw({ left: 0, top: 0, flip: false });
 	function onMove(e) {
 		const rect = svg.getBoundingClientRect();
 		const s = Math.min(rect.width / W, rect.height / H);
