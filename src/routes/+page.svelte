@@ -2,6 +2,13 @@
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { steps } from '#lib/story/steps.js';
+	import StoryMap from '#lib/StoryMap.svelte';
+
+	let { data } = $props();
+
+	// scenes that show the map: 'everyone' (overview) and 'closest' (explore)
+	const OVERVIEW = steps.findIndex((s) => s.id === 'everyone');
+	const EXPLORE = steps.findIndex((s) => s.id === 'closest');
 
 	let active = $state(0);
 	let progress = $state(0);
@@ -42,11 +49,21 @@
 	<section class="story">
 		<div class="stage" aria-live="polite">
 			{#each steps as s, i (s.id)}
-				<div class="layer" class:on={i === active} aria-hidden={i !== active}>
-					<p class="tag">Scene {i + 1} · placeholder</p>
-					<p class="what">{s.visual}</p>
-				</div>
+				{#if i !== OVERVIEW && i !== EXPLORE}
+					<div class="layer" class:on={i === active} aria-hidden={i !== active}>
+						<p class="tag">Scene {i + 1} · placeholder</p>
+						<p class="what">{s.visual}</p>
+					</div>
+				{/if}
 			{/each}
+			<div class="maplayer" class:on={active === OVERVIEW || active === EXPLORE}>
+				<StoryMap
+					spaces={data.spaces}
+					boundaries={data.boundaries}
+					water={data.water}
+					mode={active === EXPLORE ? 'explore' : 'overview'}
+				/>
+			</div>
 			<p class="meter" aria-hidden="true">
 				<span style:width="{((active + progress) / steps.length) * 100}%"></span>
 			</p>
@@ -93,6 +110,17 @@
 		margin-left: 380px;
 	}
 	.layer.on { opacity: 1; }
+	.maplayer {
+		position: absolute;
+		top: 24px;
+		bottom: 24px;
+		left: 440px;
+		right: 24px;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.6s ease;
+	}
+	.maplayer.on { opacity: 1; pointer-events: auto; }
 	.tag { font-family: var(--font-title); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--ink-3); margin: 0 0 6px; }
 	.what { margin: 0; color: var(--ink-2); }
 	.meter { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; margin: 0; background: var(--line); }
