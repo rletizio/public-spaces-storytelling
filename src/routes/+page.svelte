@@ -73,6 +73,7 @@
 					spaces={data.spaces}
 					layout={active === ACCESS ? 'access' : 'size'}
 					emphasis={active === ACCESS ? 'pair' : 'top10'}
+					show={progress >= 0.5}
 				/>
 			</div>
 			<p class="meter" aria-hidden="true">
