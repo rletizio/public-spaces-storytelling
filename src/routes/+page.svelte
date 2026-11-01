@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { steps } from '#lib/story/steps.js';
+	import { sources } from '#lib/story/sources.js';
 	import StoryMap from '#lib/StoryMap.svelte';
 	import DotPlot from '#lib/DotPlot.svelte';
 	import OwnershipTimeline from '#lib/OwnershipTimeline.svelte';
@@ -43,6 +44,7 @@
 		features: data.spaces.features.filter((f) => f.properties.city === 'Boston')
 	});
 	const half = $derived(progress >= 0.5);
+	const source = $derived(sources[steps[active].id]);
 
 	let active = $state(0);
 	let progress = $state(0);
@@ -134,6 +136,15 @@
 			</div>
 			<div class="full"><StageText kind="quote" on={active === WHYTE} /></div>
 			<div class="full"><StageText kind="close" on={active === CLOSE} onexplore={exploreAgain} /></div>
+			{#key active}
+				<aside class="source" aria-label="Sources and method for this scene">
+					<span class="lab">Data</span> {source.data}
+					{#if source.method}<span class="lab">Method</span> {source.method}{/if}
+					{#each source.links ?? [] as l (l.url)}
+						<a href={l.url} target="_blank" rel="noreferrer">{l.label}</a>
+					{/each}
+				</aside>
+			{/key}
 			<p class="meter" aria-hidden="true">
 				<span style:width="{((active + progress) / steps.length) * 100}%"></span>
 			</p>
@@ -167,11 +178,11 @@
 		background: var(--surface-2);
 		border-bottom: 1px solid var(--line);
 	}
-	.full { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+	.full { position: absolute; inset: 0 0 64px 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 	.maplayer {
 		position: absolute;
 		top: 24px;
-		bottom: 24px;
+		bottom: 76px;
 		left: 440px;
 		right: 24px;
 		opacity: 0;
@@ -182,6 +193,16 @@
 	.maplayer.on.faint { opacity: 0.14; pointer-events: none; }
 	.maplayer.center { display: flex; align-items: center; }
 	.maplayer.center :global(.wrap) { width: 100%; }
+	.source {
+		position: absolute; left: 0; right: 0; bottom: 4px; z-index: 2; padding: 6px 32px 8px;
+		font-size: 0.72rem; line-height: 1.45; color: var(--ink-2); background: var(--surface-2); border-top: 1px solid var(--line);
+		animation: source-in 0.5s ease;
+	}
+	.source .lab { font-family: var(--font-title); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink); margin-right: 2px; }
+	.source .lab + .lab, .source a { margin-left: 10px; }
+	.source a { color: var(--ink); }
+	@keyframes source-in { from { opacity: 0; } to { opacity: 1; } }
+	@media (prefers-reduced-motion: reduce) { .source { animation: none; } }
 	.meter { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; margin: 0; background: var(--line); }
 	.meter span { display: block; height: 100%; background: var(--seq-4); }
 

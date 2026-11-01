@@ -316,3 +316,4 @@ Notes: "Large park" means a space of 10 acres or more. Boston and Cambridge scho
 - **Scene 12:** columns enter with a delay; "Explore again" scrolls back to scene 4.
 - **Data:** `static/data/story.json` (nearest-space shares, from `scripts/story_stats.py`) and `grid.geojson` with `d_big_m` (from `scripts/preprocess_grid.py`).
 - **Removed:** the dashboard pages and their components that the story replaced.
+- **Sources and method:** a strip at the bottom of the stage shows the data source and the assumptions for the scene on screen. The texts are in `src/lib/story/sources.js`, keyed by scene id; there is no separate sources panel.
