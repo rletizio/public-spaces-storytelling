@@ -6,7 +6,7 @@ Inputs  (prompt/data):  Grid500m_Polygons.geojson  (500 m cells, EPSG:26986, wit
                         Spaces_green.geojson       (the spaces with area_green_m2 / area_green_pct)
                         MassGIS - Census Blocks.geojson (2020 population, Boston / Cambridge / Somerville blocks only)
 Output  (static/data):  grid.geojson  (WGS84; only cells that touch Boston, Cambridge or Somerville)
-Each cell keeps its area figures plus the spaces that fall in it (largest first), so the page can list
+Each cell keeps its area figures, the distance to the nearest space of 10 acres or more (d_big_m), plus the spaces that fall in it (largest first), so the page can list
 "what spaces are here".  Geometry work is done in EPSG:26986 (meters).
 """
 from pathlib import Path
@@ -73,6 +73,10 @@ for (ri, ci) in key:
                 pubs += key[(ri + dr, ci + dc)][1]
     nb[(ri, ci)] = (pops, pubs)
 
+# distance from each cell centre to the nearest large space (10 acres or more), for the "no large park nearby" test
+big = spaces[spaces.area_acres >= 10].geometry.union_all()
+d_big = dict(zip(grid.id, grid.geometry.centroid.distance(big)))
+
 rows = []
 for _, r in grid.iterrows():
     area = r.overlap_area_m2
@@ -88,7 +92,7 @@ for _, r in grid.iterrows():
         area_m2=num(area), pub_m2=num(pub), pub_share=num(100 * pub / area, 1),
         pub_green_pct=None if pub == 0 else num(pub_green_pct, 1),
         green_pct=num(green_pct, 1), water_pct=num(100 * water / area, 1),
-        n_spaces=c["n"], spaces=c["spaces"]))
+        d_big_m=num(d_big[r.id]), n_spaces=c["n"], spaces=c["spaces"]))
 out = gpd.GeoDataFrame(rows, geometry=grid.geometry.values, crs=M).to_crs(4326)
 out["geometry"] = out.geometry.simplify(0.00001)
 # list-valued column: write through json so the GeoJSON keeps real arrays

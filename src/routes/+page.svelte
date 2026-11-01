@@ -3,6 +3,8 @@
 	import { steps } from '#lib/story/steps.js';
 	import StoryMap from '#lib/StoryMap.svelte';
 	import DotPlot from '#lib/DotPlot.svelte';
+	import OwnershipTimeline from '#lib/OwnershipTimeline.svelte';
+	import StoryGrid from '#lib/StoryGrid.svelte';
 
 	let { data } = $props();
 
@@ -12,7 +14,22 @@
 	// scenes that show the dot plot: ordered by size, then by access
 	const ORDER = steps.findIndex((s) => s.id === 'order');
 	const ACCESS = steps.findIndex((s) => s.id === 'access');
-	const hasVisual = (i) => [OVERVIEW, EXPLORE, ORDER, ACCESS].includes(i);
+	const HISTORY = steps.findIndex((s) => s.id === 'history');
+	const PEOPLE = steps.findIndex((s) => s.id === 'people');
+	const PRIORITY = steps.findIndex((s) => s.id === 'priority');
+	const hasVisual = (i) => [OVERVIEW, EXPLORE, ORDER, ACCESS, HISTORY, PEOPLE, PRIORITY].includes(i);
+
+	// Emerald Necklace spaces in the dataset that have an acquisition year (Jamaica Pond has none):
+	// Franklin Park and its zoo, Arnold Arboretum I and II, Back Bay Fens, Olmsted Park, The Riverway and Riverway.
+	const NECKLACE = {
+		label: 'Emerald Necklace parks',
+		ids: ['S0001', 'S0283', 'S0003', 'S0014', 'S0011', 'S0023', 'S0035', 'S0169']
+	};
+	const bostonSpaces = $derived({
+		...data.spaces,
+		features: data.spaces.features.filter((f) => f.properties.city === 'Boston')
+	});
+	const half = $derived(progress >= 0.5);
 
 	let active = $state(0);
 	let progress = $state(0);
@@ -90,6 +107,19 @@
 					show={progress >= 0.5}
 				/>
 			</div>
+			<div class="maplayer center" class:on={active === HISTORY}>
+				<OwnershipTimeline spaces={bostonSpaces} show={active === HISTORY && half} necklace={NECKLACE} />
+			</div>
+			<div class="maplayer" class:on={active === PEOPLE || active === PRIORITY}>
+				<StoryGrid
+					grid={data.grid}
+					boundaries={data.boundaries}
+					water={data.water}
+					layer={active === PRIORITY || (active === PEOPLE && half) ? 'ratio' : 'space'}
+					emphasis={active === PRIORITY && half}
+					note={active === PEOPLE && half ? 'spread' : active === PRIORITY && half ? 'priority' : null}
+				/>
+			</div>
 			<p class="meter" aria-hidden="true">
 				<span style:width="{((active + progress) / steps.length) * 100}%"></span>
 			</p>
@@ -144,6 +174,8 @@
 		transition: opacity 0.6s ease;
 	}
 	.maplayer.on { opacity: 1; pointer-events: auto; }
+	.maplayer.center { display: flex; align-items: center; }
+	.maplayer.center :global(.wrap) { width: 100%; }
 	.tag { font-family: var(--font-title); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--ink-3); margin: 0 0 6px; }
 	.what { margin: 0; color: var(--ink-2); }
 	.meter { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; margin: 0; background: var(--line); }

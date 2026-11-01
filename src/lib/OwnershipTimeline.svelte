@@ -4,9 +4,11 @@
 	import { OWNERS, CATEGORIES, ownerCss } from './colors.js';
 	import { fmtInt } from './format.js';
 
-	// hoverId: space hovered in the dot plot (highlights its owner and type here)
-	// filter / onfilter: {owner, category} chosen by clicking here (filters the dot plot)
-	let { spaces, hoverId = null, filter = { owner: null, category: null }, onfilter = () => {} } = $props();
+	// necklace: { ids, label } spaces to outline in the timeline once `show` is true (with the 1875-1900 band).
+	// Clicking an owner, a type or a flow dims everything else; click again to clear.
+	let { spaces, hoverId = null, show = false, necklace = null } = $props();
+	let filter = $state.raw({ owner: null, category: null });
+	const onfilter = (f) => (filter = f);
 
 	const W = 860;
 	const H = 480;
@@ -24,7 +26,7 @@
 	const catLabel = Object.fromEntries(CATEGORIES.map((c) => [c.key, c.label]));
 	const ownerLabel = Object.fromEntries(OWNERS.map((o) => [o.key, o.label]));
 
-	function build(spaces) {
+	function build(spaces, necklace) {
 		const feats = spaces.features.map((f) => f.properties);
 		const keys = OWNERS.map((o) => o.key);
 		const dated = feats.filter((d) => d.year != null);
@@ -54,6 +56,15 @@
 			return seg;
 		});
 
+		// the highlighted spaces (Emerald Necklace): their cumulative acres, and their share of the 1875-1900 area
+		const nk = new Set(necklace?.ids ?? []);
+		const nkDated = dated.filter((d) => nk.has(d.id));
+		const nkRows = d3.range(START, END + 1).map((year) => ({ year, v: d3.sum(nkDated.filter((d) => d.year <= year), (d) => d.area_acres) }));
+		const nkArea = d3.area().x((d) => x(d.year)).y0(y(0)).y1((d) => y(d.v)).curve(d3.curveStepAfter);
+		const band = dated.filter((d) => d.year >= 1875 && d.year <= 1900);
+		const bandAcres = d3.sum(band, (d) => d.area_acres);
+		const nkAcres = d3.sum(nkDated, (d) => d.area_acres);
+
 		// Sankey: owner -> type, all spaces, acres
 		const cats = CATEGORIES.map((c) => c.key);
 		const catTotal = Object.fromEntries(cats.map((c) => [c, d3.sum(feats.filter((d) => d.category === c), (d) => d.area_acres)]));
@@ -80,6 +91,10 @@
 		const link = sankeyLinkHorizontal();
 		return {
 			rows,
+			necklaceD: nkDated.length ? nkArea(nkRows) : null,
+			nkAcres,
+			nkShare: bandAcres ? d3.sum(nkDated.filter((d) => d.year >= 1875 && d.year <= 1900), (d) => d.area_acres) / bandAcres : 0,
+			bandShare: datedTotal ? bandAcres / datedTotal : 0,
 			x,
 			y,
 			layers,
@@ -99,7 +114,7 @@
 			xTicks: [1630, 1730, 1830, 1930, 2025]
 		};
 	}
-	const model = $derived(build(spaces));
+	const model = $derived(build(spaces, necklace));
 
 	// ---- emphasis: from the dot plot hover (owner + type) or from hovering here ----
 	let local = $state(null); // { owner?, category? }
@@ -205,11 +220,6 @@
 </script>
 
 <div class="wrap" bind:this={wrap}>
-	<ul class="how" aria-label="How to use the ownership chart">
-		<li><b>Click</b> an owner (legend, layer, bar or left node) or a type (right node) to filter the dot plot; click again to clear. Click a flow to choose both.</li>
-		<li><b>Hover a dot</b> in the dot plot to light up that space’s owner, type and acquisition year here.</li>
-		<li>Hover the layers for the cumulative area in any year. Hatched = area with no acquisition year on record.</li>
-	</ul>
 
 	<div class="owners" role="group" aria-label="Filter by owner">
 		<span class="lgt">Owner</span>
@@ -230,7 +240,9 @@
 	</div>
 
 	<p class="status" aria-live="polite">
-		{#if hovered}
+		{#if show && necklace && model.necklaceD}
+			<strong>{necklace.label}</strong> (outlined): {fmtInt(model.nkAcres)} acres, {Math.round(model.nkShare * 100)}% of the area acquired between 1875 and 1900.
+		{:else if hovered}
 			<strong>{hovered.name}</strong> · {hovered.city} · {ownerLabel[hovered.owner]} · {hovered.category} ·
 			{hovered.year != null ? `acquired ${hovered.year}` : 'no acquisition year on record'}
 		{:else}
@@ -300,6 +312,13 @@
 			<circle class="mark-dot" cx={yearX} cy={BOT} r="4.5" />
 			<text class="mark-label" x={Math.min(yearX, X1 - 40)} y={TOP - 10} text-anchor="middle">{hovered.year}</text>
 		{/if}
+
+		<!-- highlight: the 1875-1900 band and the Emerald Necklace spaces -->
+		<g class="hl" class:on={show && necklace} pointer-events="none">
+			<rect class="band" x={model.x(1875)} y={TOP} width={model.x(1900) - model.x(1875)} height={BOT - TOP} />
+			<text class="band-label" x={(model.x(1875) + model.x(1900)) / 2} y={TOP - 6} text-anchor="middle">1875–1900</text>
+			{#if model.necklaceD}<path class="nk" d={model.necklaceD} />{/if}
+		</g>
 
 		<!-- undated bar -->
 		{#each model.undatedSegs as s (s.key)}
@@ -409,16 +428,14 @@
 	{/if}
 
 	<p class="note">
-		Acquisition years exist only for Boston (city records); the other {fmtInt(model.nUndated)} spaces, including most
-		state land, appear in the hatched bar. Acres are summed over spaces.
+		{fmtInt(model.nUndated)} of these {model.total} Boston spaces have no acquisition year on record (hatched bar), including
+		Jamaica Pond, so they are not in the timeline. Acres are summed over spaces.
 	</p>
 </div>
 
 <style>
 	.wrap { position: relative; }
 	svg { width: 100%; height: auto; display: block; overflow: visible; }
-	.how { margin: 0 0 8px; padding: 8px 12px 8px 28px; font-size: 0.78rem; color: var(--ink-2); background: var(--surface-2); border-radius: 8px; }
-	.how li + li { margin-top: 3px; }
 	.owners { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; font-size: 0.8rem; }
 	.lgt { font-weight: 700; color: var(--ink); margin-right: 2px; }
 	.chip {
@@ -430,6 +447,11 @@
 	.chip.clear { color: var(--ink-2); border-style: dashed; }
 	.sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 	.status { margin: 0 0 4px; font-size: 0.85rem; color: var(--ink-2); min-height: 2.6em; }
+	.hl { opacity: 0; transition: opacity 0.7s ease; }
+	.hl.on { opacity: 1; }
+	.band { fill: var(--ink); fill-opacity: 0.07; }
+	.band-label { fill: var(--ink); font-size: 11px; font-weight: 700; }
+	.nk { fill: var(--ink); fill-opacity: 0.28; stroke: var(--ink); stroke-width: 2; }
 	.panel { fill: var(--ink); font-family: var(--font-title); font-weight: 700; font-size: 14px; }
 	.panel-sub { fill: var(--ink-3); font-size: 11px; }
 	.grid { stroke: var(--line); stroke-width: 1; }

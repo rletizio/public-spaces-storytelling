@@ -55,6 +55,7 @@ export const steps = [
 	},
 	{
 		id: 'history',
+		tall: true,
 		role: 'Rising',
 		title: 'Why it looks like this, in Boston',
 		body: 'About two thirds of the public space we can date in Boston was created between 1875 and 1900. In 1875 the city passed a Park Act, and in 1878 it hired Frederick Law Olmsted to design a chain of large parks, the Emerald Necklace. They were meant as an escape from city life and for public health, for the whole city. This is Boston history; Cambridge and Somerville have their own.',
@@ -62,16 +63,18 @@ export const steps = [
 	},
 	{
 		id: 'people',
+		tall: true,
 		role: 'Message',
 		title: 'Public space does not follow people.',
-		body: 'Small spaces cluster near downtown Boston. The largest areas of public space lie south and southwest of downtown. Some parts of the area have fewer than 100 residents for every acre of public space. Others have more than 3,000.',
+		body: 'Small spaces cluster near downtown Boston. The largest areas of public space lie south and southwest of downtown. Then the residents join the map.',
 		visual: 'Dashboard 3 grid map: circles for public space, then color for residents per acre.'
 	},
 	{
 		id: 'priority',
+		tall: true,
 		role: 'Message',
 		title: 'In these places, the small plazas and squares make the difference.',
-		body: '8% of residents live where each acre of public space is shared by more than 1,000 people and no large park lies within 1,000 m. By city: Somerville 27%, Cambridge 8%, Boston 7%.',
+		body: 'Here each acre of public space is shared by more than 1,000 people, and no large park lies within 1,000 m.',
 		visual: 'Dashboard 3 grid map with priority cells outlined.'
 	},
 	{
