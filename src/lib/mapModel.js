@@ -1,5 +1,4 @@
-// Geometry helpers shared by the story map. They mirror the logic inside SpaceMap.svelte (Dashboard 1),
-// which keeps its own copy so the dashboards stay untouched.
+// Geometry helpers for the story map: projection, 500 m scale, hit-testing and basemap tiles.
 import * as d3 from 'd3';
 import { groupOf } from './colors.js';
 

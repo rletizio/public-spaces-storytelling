@@ -1,19 +1,10 @@
 # Public Spaces Storytelling
 
-A scrolling data story about parks, plazas and squares in Boston, Cambridge and Somerville (CS171 visualization project). Built with SvelteKit, D3 and Scrollama. It reuses the visualizations from the earlier dashboard project, one at a time.
+A scrolling data story about parks, plazas and squares in Boston, Cambridge and Somerville (CS171 visualization project). Built with SvelteKit, D3 and Scrollama. It builds on visualizations first made for a set of dashboards, shown here one at a time.
 
 **Live site:** https://rletizio.github.io/public-spaces-storytelling/
 
 The story's structure, texts and technical specification are in `prompt/Storytelling Structure.md`.
-
-## Earlier dashboards (kept for reference)
-
-| Page | Path | Content |
-|---|---|---|
-| Landing | `/` | Index of dashboards |
-| Dashboard 1 | `/dashboard-1/` | Map of public spaces (pan, jump, select an area) linked to a dot plot of the people living within 500 m of each space |
-| Dashboard 2 | `/dashboard-2/` | The dot plot linked to an ownership chart (area acquired over time + owner → type flow diagram): hover a dot to light up its owner and type, click an owner or type to filter the dots |
-| Dashboard 3 | `/dashboard-3/` | SK_06: grid of 500 m cells over the three cities; circle size = public space in the cell, shade = % green; hover for details, click to pin a cell and list the spaces inside |
 
 ## Run locally
 
@@ -36,15 +27,13 @@ water supply and flood control land are excluded); MassGIS is the primary source
 data; people within 500 m are 2020 census block populations weighted by the share of each block inside a
 500 m buffer of the space (straight-line distance).
 
-## Adding another dashboard
+## Page structure
 
-Create `src/routes/<name>/+page.svelte` (and a `+page.js` if it loads data with `asset('/data/...')`), then
-list it in `src/routes/+page.svelte`. GitHub Pages serves everything from the same repository at
-`/<name>/`.
+One route (`/`) holds the whole story: a sticky stage plus one Scrollama step per scene. Step texts are in `src/lib/story/steps.js`; each visualization is a component in `src/lib/` that receives the active scene from the page.
 
 ## Deployment
 
 Every push to `main` runs `.github/workflows/deploy.yml`, which builds the static site with
-`BASE_PATH=/public-spaces-dashboard` and publishes it to GitHub Pages.
+`BASE_PATH=/public-spaces-storytelling` and publishes it to GitHub Pages.
 
 Basemap © OpenStreetMap contributors.

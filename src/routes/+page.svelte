@@ -1,14 +1,18 @@
 <script>
 	import { onMount } from 'svelte';
-	import { resolve } from '$app/paths';
 	import { steps } from '#lib/story/steps.js';
 	import StoryMap from '#lib/StoryMap.svelte';
+	import DotPlot from '#lib/DotPlot.svelte';
 
 	let { data } = $props();
 
 	// scenes that show the map: 'everyone' (overview) and 'closest' (explore)
 	const OVERVIEW = steps.findIndex((s) => s.id === 'everyone');
 	const EXPLORE = steps.findIndex((s) => s.id === 'closest');
+	// scenes that show the dot plot: ordered by size, then by access
+	const ORDER = steps.findIndex((s) => s.id === 'order');
+	const ACCESS = steps.findIndex((s) => s.id === 'access');
+	const hasVisual = (i) => [OVERVIEW, EXPLORE, ORDER, ACCESS].includes(i);
 
 	let active = $state(0);
 	let progress = $state(0);
@@ -49,7 +53,7 @@
 	<section class="story">
 		<div class="stage" aria-live="polite">
 			{#each steps as s, i (s.id)}
-				{#if i !== OVERVIEW && i !== EXPLORE}
+				{#if !hasVisual(i)}
 					<div class="layer" class:on={i === active} aria-hidden={i !== active}>
 						<p class="tag">Scene {i + 1} · placeholder</p>
 						<p class="what">{s.visual}</p>
@@ -62,6 +66,13 @@
 					boundaries={data.boundaries}
 					water={data.water}
 					mode={active === EXPLORE ? 'explore' : 'overview'}
+				/>
+			</div>
+			<div class="maplayer" class:on={active === ORDER || active === ACCESS}>
+				<DotPlot
+					spaces={data.spaces}
+					layout={active === ACCESS ? 'access' : 'size'}
+					emphasis={active === ACCESS ? 'pair' : 'top10'}
 				/>
 			</div>
 			<p class="meter" aria-hidden="true">
@@ -82,9 +93,6 @@
 		</div>
 	</section>
 
-	<footer>
-		<a href={resolve('/dashboards')}>Earlier dashboards</a>
-	</footer>
 </main>
 
 <style>
