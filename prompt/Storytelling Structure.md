@@ -304,3 +304,15 @@ Notes: "Large park" means a space of 10 acres or more. Boston and Cambridge scho
 - Confirm the Emerald Necklace list for the scene 8 highlight.
 - Add a Somerville example to scene 1 if one is found.
 - Write the "Sources and method" section.
+
+---
+
+## 6. As built (all 12 scenes)
+
+- **Components:** `StoryMap` (scenes 3, 4), `NearestBar` (5), `DotPlot` (6, 7), `OwnershipTimeline` (8), `StoryGrid` (9, 10, faded in 11), `NewsPhones` (1), `StageText` (2, 11, 12). Texts are in `src/lib/story/steps.js`.
+- **Scroll:** Scrollama picks the active scene; the scene's progress (0 to 1) is measured from the scroll position. Scenes whose highlight appears halfway (5 to 10) have extra scroll room (`tall`). Scenes 2, 11 and 12 have no text card (`bare`): their text is on the stage.
+- **Scene 1:** the four phone screenshots are cropped from `prompt/screenshots/` into `static/news/` (headline and first lines, top of each page; the Reddit crop stops before the post's stronger language). Order on screen: Copley Square, City Hall Plaza, Harvard Square, Central Square. Each links to its source.
+- **Scene 11:** the quote is shown in full over the faded priority map from scene 10.
+- **Scene 12:** columns enter with a delay; "Explore again" scrolls back to scene 4.
+- **Data:** `static/data/story.json` (nearest-space shares, from `scripts/story_stats.py`) and `grid.geojson` with `d_big_m` (from `scripts/preprocess_grid.py`).
+- **Removed:** the dashboard pages and their components that the story replaced.

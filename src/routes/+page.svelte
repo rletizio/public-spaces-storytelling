@@ -6,6 +6,8 @@
 	import OwnershipTimeline from '#lib/OwnershipTimeline.svelte';
 	import StoryGrid from '#lib/StoryGrid.svelte';
 	import NearestBar from '#lib/NearestBar.svelte';
+	import NewsPhones from '#lib/NewsPhones.svelte';
+	import StageText from '#lib/StageText.svelte';
 
 	let { data } = $props();
 
@@ -19,7 +21,16 @@
 	const PEOPLE = steps.findIndex((s) => s.id === 'people');
 	const PRIORITY = steps.findIndex((s) => s.id === 'priority');
 	const SMALL = steps.findIndex((s) => s.id === 'small');
-	const hasVisual = (i) => [OVERVIEW, EXPLORE, SMALL, ORDER, ACCESS, HISTORY, PEOPLE, PRIORITY].includes(i);
+	const NEWS = steps.findIndex((s) => s.id === 'news');
+	const JOURNEY = steps.findIndex((s) => s.id === 'journey');
+	const WHYTE = steps.findIndex((s) => s.id === 'whyte');
+	const CLOSE = steps.findIndex((s) => s.id === 'close');
+
+	// "Explore again": back to the interactive map
+	function exploreAgain() {
+		const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		document.querySelectorAll('.step')[EXPLORE]?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+	}
 
 	// Emerald Necklace spaces in the dataset that have an acquisition year (Jamaica Pond has none):
 	// Franklin Park and its zoo, Arnold Arboretum I and II, Back Bay Fens, Olmsted Park, The Riverway and Riverway.
@@ -85,14 +96,10 @@
 <main>
 	<section class="story">
 		<div class="stage" aria-live="polite">
-			{#each steps as s, i (s.id)}
-				{#if !hasVisual(i)}
-					<div class="layer" class:on={i === active} aria-hidden={i !== active}>
-						<p class="tag">Scene {i + 1} · placeholder</p>
-						<p class="what">{s.visual}</p>
-					</div>
-				{/if}
-			{/each}
+			<div class="maplayer center" class:on={active === NEWS}>
+				<NewsPhones spaces={data.spaces} progress={active === NEWS ? progress : 0} />
+			</div>
+			<div class="full"><StageText kind="journey" on={active === JOURNEY} /></div>
 			<div class="maplayer" class:on={active === OVERVIEW || active === EXPLORE || active === SMALL} class:faint={active === SMALL}>
 				<StoryMap
 					spaces={data.spaces}
@@ -115,16 +122,18 @@
 			<div class="maplayer center" class:on={active === HISTORY}>
 				<OwnershipTimeline spaces={bostonSpaces} show={active === HISTORY && half} necklace={NECKLACE} />
 			</div>
-			<div class="maplayer" class:on={active === PEOPLE || active === PRIORITY}>
+			<div class="maplayer" class:on={active === PEOPLE || active === PRIORITY || active === WHYTE} class:faint={active === WHYTE}>
 				<StoryGrid
 					grid={data.grid}
 					boundaries={data.boundaries}
 					water={data.water}
-					layer={active === PRIORITY || (active === PEOPLE && half) ? 'ratio' : 'space'}
-					emphasis={active === PRIORITY && half}
+					layer={active === PRIORITY || active === WHYTE || (active === PEOPLE && half) ? 'ratio' : 'space'}
+					emphasis={active === WHYTE || (active === PRIORITY && half)}
 					note={active === PEOPLE && half ? 'spread' : active === PRIORITY && half ? 'priority' : null}
 				/>
 			</div>
+			<div class="full"><StageText kind="quote" on={active === WHYTE} /></div>
+			<div class="full"><StageText kind="close" on={active === CLOSE} onexplore={exploreAgain} /></div>
 			<p class="meter" aria-hidden="true">
 				<span style:width="{((active + progress) / steps.length) * 100}%"></span>
 			</p>
@@ -133,11 +142,13 @@
 		<div class="steps">
 			{#each steps as s, i (s.id)}
 				<article class="step" class:on={i === active} class:tall={s.tall}>
-					<div class="card">
-						<p class="role">{s.role}</p>
-						<h2>{s.title}</h2>
-						<p>{s.body}</p>
-					</div>
+					{#if !s.bare}
+						<div class="card">
+							<p class="role">{s.role}</p>
+							<h2>{s.title}</h2>
+							<p>{s.body}</p>
+						</div>
+					{/if}
 				</article>
 			{/each}
 		</div>
@@ -156,18 +167,7 @@
 		background: var(--surface-2);
 		border-bottom: 1px solid var(--line);
 	}
-	.layer {
-		grid-area: 1 / 1;
-		opacity: 0;
-		transition: opacity 0.6s ease;
-		text-align: center;
-		max-width: 520px;
-		padding: 24px;
-		border: 1px dashed var(--ink-3);
-		border-radius: 12px;
-		margin-left: 380px;
-	}
-	.layer.on { opacity: 1; }
+	.full { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 	.maplayer {
 		position: absolute;
 		top: 24px;
@@ -179,11 +179,9 @@
 		transition: opacity 0.6s ease;
 	}
 	.maplayer.on { opacity: 1; pointer-events: auto; }
-	.maplayer.on.faint { opacity: 0.12; pointer-events: none; }
+	.maplayer.on.faint { opacity: 0.14; pointer-events: none; }
 	.maplayer.center { display: flex; align-items: center; }
 	.maplayer.center :global(.wrap) { width: 100%; }
-	.tag { font-family: var(--font-title); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--ink-3); margin: 0 0 6px; }
-	.what { margin: 0; color: var(--ink-2); }
 	.meter { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; margin: 0; background: var(--line); }
 	.meter span { display: block; height: 100%; background: var(--seq-4); }
 

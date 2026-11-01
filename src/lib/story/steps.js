@@ -1,9 +1,11 @@
 // The twelve scenes of the story. Text follows prompt/Storytelling Structure.md.
 // `tall` gives a scene extra scrolling room (its text card stays put) for highlights that appear mid-scene.
+// `bare` scenes have no text card: their text is drawn on the stage itself.
 // `visual` describes what the sticky stage shows; the real visualizations replace the placeholders scene by scene.
 export const steps = [
 	{
 		id: 'news',
+		tall: true,
 		role: 'Hook',
 		title: 'Recently, Copley Square made the news.',
 		body: 'The newly renovated place, part of the shared image of Boston, got mixed judgments. But iconic and everyday places enter this kind of debate alike.',
@@ -11,9 +13,10 @@ export const steps = [
 	},
 	{
 		id: 'journey',
+		bare: true,
 		role: 'Hook',
 		title: 'A journey through the Boston-area public spaces',
-		body: 'Why care about these spaces when Boston is known for its big parks? We look at how the cities relate to their parks, plazas and squares.',
+		body: 'We investigate the relationship of the cities with their parks, plazas and squares.',
 		visual: 'Title and call-out on a clean screen.'
 	},
 	{
@@ -80,6 +83,7 @@ export const steps = [
 	},
 	{
 		id: 'whyte',
+		bare: true,
 		role: 'Close',
 		title: 'I end then in praise of small spaces.',
 		body: 'For a city, such places are priceless, whatever the cost. They are built of a set of basics and they are right in front of our noses. If we will look. William H. Whyte, The Social Life of Small Urban Spaces (1980).',
@@ -87,6 +91,7 @@ export const steps = [
 	},
 	{
 		id: 'close',
+		bare: true,
 		role: 'Close',
 		title: 'Know. Care. Expand.',
 		body: 'Know the small places near you: they are mapped, they are used, and they are in reach. Care about how they are designed and kept, because people already do. Expand where many people share few.',
