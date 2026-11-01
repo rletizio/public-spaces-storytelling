@@ -1,0 +1,117 @@
+/* Design tokens (light / dark). Palette values from the validated dataviz reference palette. */
+:root {
+	color-scheme: light;
+	--surface: #fcfcfb;
+	--surface-2: #f4f3f0;
+	--ink: #0b0b0b;
+	--ink-2: #52514e;
+	--ink-3: #6b6a66;
+	--line: #e3e2dd;
+	--accent: #2a78d6;
+	--accent-soft: #cde2fb;
+	--space: #cfd6c7;
+	--space-edge: #b4bdaa;
+	--water: #e4edf6;
+	--boundary: #8e8d86;
+	--c-green: #1baf7a;
+	--c-plaza: #eb6834;
+	--c-play: #2a78d6;
+	--o-city: #1baf7a;
+	--o-state: #2a78d6;
+	--o-private: #eb6834;
+	--o-other: #4a3aa7;
+	--o-nonprofit: #e87ba4;
+	--o-unknown: #9a9992;
+	--seq-1: #d3d2cb;
+	--seq-2: #9fd283;
+	--seq-3: #55b05a;
+	--seq-4: #23853f;
+	--seq-5: #0f5430;
+	--pp-1: #fbe5d6;
+	--pp-2: #f4b98c;
+	--pp-3: #ea8a50;
+	--pp-4: #cc5a26;
+	--pp-5: #8f2c0e;
+	--font-title: 'Titillium Web', 'Segoe UI', system-ui, sans-serif;
+	--font-body: 'Open Sans', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+	:root:where(:not([data-theme='light'])) {
+		color-scheme: dark;
+		--surface: #1a1a19;
+		--surface-2: #232321;
+		--ink: #f5f5f3;
+		--ink-2: #c3c2b7;
+		--ink-3: #9d9c92;
+		--line: #34342f;
+		--accent: #3987e5;
+		--accent-soft: #184f95;
+		--space: #3f4a3b;
+		--space-edge: #56624f;
+		--water: #202a34;
+		--boundary: #77766f;
+		--c-green: #199e70;
+		--c-plaza: #d95926;
+		--c-play: #3987e5;
+		--o-city: #199e70;
+		--o-state: #3987e5;
+		--o-private: #d95926;
+		--o-other: #9085e9;
+		--o-nonprofit: #d55181;
+		--o-unknown: #7a7973;
+	--seq-1: #3a3a36;
+	--seq-2: #44703d;
+	--seq-3: #58a050;
+	--seq-4: #84cc78;
+	--seq-5: #bff0a6;
+	--pp-1: #3a2c26;
+	--pp-2: #6d3d26;
+	--pp-3: #a9532a;
+	--pp-4: #e0814b;
+	--pp-5: #ffc095;
+	}
+}
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--surface: #1a1a19;
+	--surface-2: #232321;
+	--ink: #f5f5f3;
+	--ink-2: #c3c2b7;
+	--ink-3: #9d9c92;
+	--line: #34342f;
+	--accent: #3987e5;
+	--accent-soft: #184f95;
+	--space: #3f4a3b;
+	--space-edge: #56624f;
+	--water: #202a34;
+	--boundary: #77766f;
+	--c-green: #199e70;
+	--c-plaza: #d95926;
+	--c-play: #3987e5;
+	--o-city: #199e70;
+	--o-state: #3987e5;
+	--o-private: #d95926;
+	--o-other: #9085e9;
+	--o-nonprofit: #d55181;
+	--o-unknown: #7a7973;
+	--seq-1: #3a3a36;
+	--seq-2: #44703d;
+	--seq-3: #58a050;
+	--seq-4: #84cc78;
+	--seq-5: #bff0a6;
+	--pp-1: #3a2c26;
+	--pp-2: #6d3d26;
+	--pp-3: #a9532a;
+	--pp-4: #e0814b;
+	--pp-5: #ffc095;
+}
+
+* { box-sizing: border-box; }
+body {
+	margin: 0;
+	background: var(--surface);
+	color: var(--ink);
+	font-family: var(--font-body);
+	line-height: 1.45;
+}
+h1, h2, h3 { margin: 0; font-family: var(--font-title); font-weight: 700; letter-spacing: 0; }
