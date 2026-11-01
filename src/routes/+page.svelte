@@ -1,52 +1,122 @@
 <script>
+	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { steps } from '#lib/story/steps.js';
 
-	// Add new dashboards here: create src/routes/<name>/+page.svelte and list it.
-	const dashboards = [
-		{
-			path: '/dashboard-1',
-			title: 'Dashboard 1 · Who lives near each public space?',
-			text: 'A map of public spaces linked to a dot plot of the people living within 500 m of each one (Boston, Cambridge and Somerville).'
-		},
-		{
-			path: '/dashboard-2',
-			title: 'Dashboard 2 · Who owns public space?',
-			text: 'The same dot plot linked to a timeline and owner-to-type flow diagram: hover a space to see its owner and type, click an owner or type to filter.'
-		},
-		{
-			path: '/dashboard-3',
-			title: 'Dashboard 3 · How green is public space?',
-			text: 'A grid of 500 m cells over the three cities: circle size shows how much public space each cell holds, shade shows how green it is. Hover for details, click to list the spaces inside.'
-		}
-	];
+	let active = $state(0);
+	let progress = $state(0);
+
+	// Scrollama drives `active` (the scene in view) and `progress` (0 to 1 inside that scene).
+	// Scene components read these two values and never look at the scroll position themselves.
+	onMount(() => {
+		let scroller;
+		let cancelled = false;
+		import('scrollama').then(({ default: scrollama }) => {
+			if (cancelled) return;
+			scroller = scrollama();
+			scroller
+				.setup({ step: '.step', offset: 0.6, progress: true })
+				.onStepEnter(({ index }) => {
+					active = index;
+					progress = 0;
+				})
+				.onStepProgress(({ index, progress: p }) => {
+					if (index === active) progress = p;
+				});
+		});
+		const onResize = () => scroller?.resize();
+		window.addEventListener('resize', onResize);
+		return () => {
+			cancelled = true;
+			window.removeEventListener('resize', onResize);
+			scroller?.destroy();
+		};
+	});
 </script>
 
 <svelte:head>
-	<title>Public Spaces Dashboards</title>
+	<title>Public Spaces Storytelling</title>
 </svelte:head>
 
 <main>
-	<h1>Public spaces of Boston, Cambridge &amp; Somerville</h1>
-	<p class="lede">Interactive dashboards for the CS171 visualization project.</p>
-	<ul>
-		{#each dashboards as d (d.path)}
-			<li>
-				<a href={resolve(d.path)}>
-					<h2>{d.title}</h2>
-					<p>{d.text}</p>
-				</a>
-			</li>
-		{/each}
-	</ul>
+	<section class="story">
+		<div class="stage" aria-live="polite">
+			{#each steps as s, i (s.id)}
+				<div class="layer" class:on={i === active} aria-hidden={i !== active}>
+					<p class="tag">Scene {i + 1} · placeholder</p>
+					<p class="what">{s.visual}</p>
+				</div>
+			{/each}
+			<p class="meter" aria-hidden="true">
+				<span style:width="{((active + progress) / steps.length) * 100}%"></span>
+			</p>
+		</div>
+
+		<div class="steps">
+			{#each steps as s, i (s.id)}
+				<article class="step" class:on={i === active}>
+					<div class="card">
+						<p class="role">{s.role}</p>
+						<h2>{s.title}</h2>
+						<p>{s.body}</p>
+					</div>
+				</article>
+			{/each}
+		</div>
+	</section>
+
+	<footer>
+		<a href={resolve('/dashboards')}>Earlier dashboards</a>
+	</footer>
 </main>
 
 <style>
-	main { max-width: 760px; margin: 0 auto; padding: 48px 24px; }
-	h1 { font-size: 2rem; }
-	.lede { color: var(--ink-2); margin: 6px 0 24px; }
-	ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-	a { display: block; padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; color: inherit; text-decoration: none; }
-	a:hover { border-color: var(--ink-3); background: var(--surface-2); }
-	h2 { font-size: 1.2rem; }
-	a p { margin: 4px 0 0; color: var(--ink-2); font-size: 0.9rem; }
+	.story { position: relative; }
+	.stage {
+		position: sticky;
+		top: 0;
+		height: 100vh;
+		display: grid;
+		place-items: center;
+		background: var(--surface-2);
+		border-bottom: 1px solid var(--line);
+	}
+	.layer {
+		grid-area: 1 / 1;
+		opacity: 0;
+		transition: opacity 0.6s ease;
+		text-align: center;
+		max-width: 520px;
+		padding: 24px;
+		border: 1px dashed var(--ink-3);
+		border-radius: 12px;
+		margin-left: 380px;
+	}
+	.layer.on { opacity: 1; }
+	.tag { font-family: var(--font-title); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--ink-3); margin: 0 0 6px; }
+	.what { margin: 0; color: var(--ink-2); }
+	.meter { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; margin: 0; background: var(--line); }
+	.meter span { display: block; height: 100%; background: var(--seq-4); }
+
+	.steps { position: relative; margin-top: -100vh; z-index: 1; pointer-events: none; }
+	.step { min-height: 100vh; display: flex; align-items: center; padding: 0 32px; }
+	.card {
+		pointer-events: auto;
+		width: 380px;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		padding: 20px 22px;
+		opacity: 0.35;
+		transition: opacity 0.4s ease;
+	}
+	.step.on .card { opacity: 1; }
+	.role { font-family: var(--font-title); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: var(--seq-4); margin: 0 0 6px; }
+	h2 { font-family: var(--font-title); font-size: 1.5rem; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+	.card p:last-child { margin: 0; line-height: 1.55; }
+	footer { padding: 24px 32px 48px; }
+	footer a { color: var(--ink-2); }
+	@media (prefers-reduced-motion: reduce) {
+		.layer, .card { transition: none; }
+	}
 </style>
