@@ -1,0 +1,38 @@
+{
+ "residents": 875095,
+ "spaces": 836,
+ "nearest": [
+  {
+   "key": "under1",
+   "label": "Under 1 acre",
+   "residents": 410089,
+   "share": 0.46862226386849426
+  },
+  {
+   "key": "1to5",
+   "label": "1 to 5 acres",
+   "residents": 165474,
+   "share": 0.18909261280203862
+  },
+  {
+   "key": "5to10",
+   "label": "5 to 10 acres",
+   "residents": 114222,
+   "share": 0.13052525725778344
+  },
+  {
+   "key": "10plus",
+   "label": "10 acres or more",
+   "residents": 185310,
+   "share": 0.21175986607168365
+  }
+ ],
+ "under5": 0.657714876670533,
+ "within_m": {
+  "400": 0.9508339094612585,
+  "500": 0.9761545889303447,
+  "800": 0.9973785703266502,
+  "1000": 0.9995669041646907
+ },
+ "note": "Nearest space by straight-line distance from the representative point of each 2020 census block."
+}

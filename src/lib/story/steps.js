@@ -32,6 +32,7 @@ export const steps = [
 	},
 	{
 		id: 'small',
+		tall: true,
 		role: 'Rising',
 		title: 'Chances are, it is small.',
 		body: 'For two in three residents, the nearest public space is under 5 acres. For nearly half, it is under one. For one in five, the nearest is a park of 10 acres or more.',

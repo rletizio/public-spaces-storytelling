@@ -5,6 +5,7 @@
 	import DotPlot from '#lib/DotPlot.svelte';
 	import OwnershipTimeline from '#lib/OwnershipTimeline.svelte';
 	import StoryGrid from '#lib/StoryGrid.svelte';
+	import NearestBar from '#lib/NearestBar.svelte';
 
 	let { data } = $props();
 
@@ -17,7 +18,8 @@
 	const HISTORY = steps.findIndex((s) => s.id === 'history');
 	const PEOPLE = steps.findIndex((s) => s.id === 'people');
 	const PRIORITY = steps.findIndex((s) => s.id === 'priority');
-	const hasVisual = (i) => [OVERVIEW, EXPLORE, ORDER, ACCESS, HISTORY, PEOPLE, PRIORITY].includes(i);
+	const SMALL = steps.findIndex((s) => s.id === 'small');
+	const hasVisual = (i) => [OVERVIEW, EXPLORE, SMALL, ORDER, ACCESS, HISTORY, PEOPLE, PRIORITY].includes(i);
 
 	// Emerald Necklace spaces in the dataset that have an acquisition year (Jamaica Pond has none):
 	// Franklin Park and its zoo, Arnold Arboretum I and II, Back Bay Fens, Olmsted Park, The Riverway and Riverway.
@@ -91,13 +93,16 @@
 					</div>
 				{/if}
 			{/each}
-			<div class="maplayer" class:on={active === OVERVIEW || active === EXPLORE}>
+			<div class="maplayer" class:on={active === OVERVIEW || active === EXPLORE || active === SMALL} class:faint={active === SMALL}>
 				<StoryMap
 					spaces={data.spaces}
 					boundaries={data.boundaries}
 					water={data.water}
 					mode={active === EXPLORE ? 'explore' : 'overview'}
 				/>
+			</div>
+			<div class="maplayer center" class:on={active === SMALL}>
+				<NearestBar stats={data.story} fill={active === SMALL ? Math.min(1, Math.max(0, (progress - 0.05) / 0.5)) : 0} />
 			</div>
 			<div class="maplayer" class:on={active === ORDER || active === ACCESS}>
 				<DotPlot
@@ -174,6 +179,7 @@
 		transition: opacity 0.6s ease;
 	}
 	.maplayer.on { opacity: 1; pointer-events: auto; }
+	.maplayer.on.faint { opacity: 0.12; pointer-events: none; }
 	.maplayer.center { display: flex; align-items: center; }
 	.maplayer.center :global(.wrap) { width: 100%; }
 	.tag { font-family: var(--font-title); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--ink-3); margin: 0 0 6px; }
