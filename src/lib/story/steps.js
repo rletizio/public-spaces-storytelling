@@ -1,11 +1,9 @@
 // The twelve scenes of the story. Text follows prompt/Storytelling Structure.md.
-// `tall` gives a scene extra scrolling room (its text card stays put) for highlights that appear mid-scene.
 // `bare` scenes have no text card: their text is drawn on the stage itself.
 // `visual` describes what the sticky stage shows; the real visualizations replace the placeholders scene by scene.
 export const steps = [
 	{
 		id: 'news',
-		tall: true,
 		role: 'Hook',
 		title: 'Recently, Copley Square made the news.',
 		body: 'The newly renovated place, part of the shared image of Boston, got mixed judgments. But iconic and everyday places enter this kind of debate alike.',
@@ -16,7 +14,7 @@ export const steps = [
 		bare: true,
 		role: 'Hook',
 		title: 'A journey through the Boston-area public spaces',
-		body: 'We investigate the relationship of the cities with their parks, plazas and squares.',
+		body: 'We investigate the relationship of the city with its parks, plazas and squares.',
 		visual: 'Title and call-out on a clean screen.'
 	},
 	{
@@ -35,7 +33,6 @@ export const steps = [
 	},
 	{
 		id: 'small',
-		tall: true,
 		role: 'Rising',
 		title: 'Chances are, it is small.',
 		body: 'For two in three residents, the nearest public space is under 5 acres. For nearly half, it is under one. For one in five, the nearest is a park of 10 acres or more.',
@@ -43,7 +40,6 @@ export const steps = [
 	},
 	{
 		id: 'order',
-		tall: true,
 		role: 'Rising',
 		title: 'Let us order all the spaces by size.',
 		body: 'The ten largest spaces hold 43% of all the public space area.',
@@ -51,7 +47,6 @@ export const steps = [
 	},
 	{
 		id: 'access',
-		tall: true,
 		role: 'Rising',
 		title: 'But size is not access.',
 		body: 'Half of all spaces are under half an acre, and how many people live near a space has almost nothing to do with how big it is. Christian Science Plaza is accessible to more than 25 thousand people, almost as many as Franklin Park, which is 57 times larger.',
@@ -59,7 +54,6 @@ export const steps = [
 	},
 	{
 		id: 'history',
-		tall: true,
 		role: 'Rising',
 		title: 'Why it looks like this, in Boston',
 		body: 'About two thirds of the public space we can date in Boston was created between 1875 and 1900. In 1875 the city passed a Park Act, and in 1878 it hired Frederick Law Olmsted to design a chain of large parks, the Emerald Necklace. They were meant as an escape from city life and for public health, for the whole city. This is Boston history; Cambridge and Somerville have their own.',
@@ -67,7 +61,6 @@ export const steps = [
 	},
 	{
 		id: 'people',
-		tall: true,
 		role: 'Message',
 		title: 'Public space does not follow people.',
 		body: 'Small spaces cluster near downtown Boston. The largest areas of public space lie south and southwest of downtown. Then the residents join the map.',
@@ -75,7 +68,6 @@ export const steps = [
 	},
 	{
 		id: 'priority',
-		tall: true,
 		role: 'Message',
 		title: 'In these places, the small plazas and squares make the difference.',
 		body: 'Here each acre of public space is shared by more than 1,000 people, and no large park lies within 1,000 m.',
