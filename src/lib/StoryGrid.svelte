@@ -1,6 +1,7 @@
 <script>
 	import * as d3 from 'd3';
 	import { fmtInt, fmtAcres } from './format.js';
+	import Hint from './Hint.svelte';
 
 	// The 500 m grid. layer 'space': a circle per cell sized by its public space. layer 'ratio': cells are also shaded by
 	// residents per acre of public space (cell + its 8 neighbours). `emphasis` outlines the priority cells and dims the rest.
@@ -14,6 +15,9 @@
 	const PPA_CUTS = [100, 300, 1000, 3000];
 	const PPA_LABELS = ['under 100', '100–300', '300–1,000', '1,000–3,000', 'over 3,000'];
 	const PRIORITY_PPA = 1000;
+	// Large census blocks (the airport, the harbor) spread a few residents evenly over many cells, about 1 each.
+	// A cell with fewer residents than this counts as uninhabited.
+	const MIN_RESIDENTS = 10;
 	const ppaClass = (v) => {
 		const i = PPA_CUTS.findIndex((c) => v < c);
 		return i === -1 ? 4 : i;
@@ -29,13 +33,13 @@
 			const [cx, cy] = proj(d3.geoCentroid(f));
 			const p = f.properties;
 			const space = p.pub_nb_m2;
-			const state = !(p.pop >= 1)
+			const state = !(p.pop >= MIN_RESIDENTS)
 				? { kind: 'none' }
 				: !(space > 0)
 					? { kind: 'nospace' }
 					: { kind: 'ppa', v: p.pop_nb / (space / ACRES), k: ppaClass(p.pop_nb / (space / ACRES)) };
 			const priority =
-				p.pop >= 1 && (state.kind === 'nospace' || state.v >= PRIORITY_PPA) && p.d_big_m > BIG_PARK_M;
+				state.kind !== 'none' && (state.kind === 'nospace' || state.v >= PRIORITY_PPA) && p.d_big_m > BIG_PARK_M;
 			return { id: p.id, p, d: path(f), cx, cy, side: (bx1 - bx0 + by1 - by0) / 2, state, priority };
 		});
 		const side = d3.median(cells, (c) => c.side);
@@ -78,6 +82,7 @@
 </script>
 
 <div class="wrap" bind:this={box}>
+	<Hint>Hover a cell to see its public space{ratio ? ' and its residents' : ''}.</Hint>
 	<svg
 		viewBox="0 0 {W} {model.H}"
 		role="img"
@@ -127,7 +132,7 @@
 				{:else if hover.state.kind === 'nospace'}
 					<div>No public space in or next to this cell</div>
 				{:else}
-					<div>Nobody lives here</div>
+					<div>Almost nobody lives here (fewer than {MIN_RESIDENTS} residents)</div>
 				{/if}
 			{/if}
 		</div>
@@ -168,7 +173,7 @@
 	.wrap { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; gap: 6px; }
 	svg { width: 100%; flex: 1; min-height: 0; display: block; }
 	.water { fill: var(--water); }
-	.boundary { fill: none; stroke: var(--boundary); stroke-width: 0.9; stroke-dasharray: 3 2; }
+	.boundary { fill: none; stroke: var(--boundary); stroke-width: 1.2; stroke-dasharray: 5 3; }
 	.cell { fill-opacity: 0; stroke: var(--line); stroke-width: 0.6; transition: fill-opacity 0.9s ease, opacity 0.6s ease; }
 	.cell.shown { fill-opacity: 1; stroke: var(--surface); stroke-width: 0.8; }
 	.cell.dimmed { opacity: 0.2; }
@@ -183,10 +188,10 @@
 	.hit { fill: transparent; stroke: none; }
 	.tip {
 		position: absolute; z-index: 5; pointer-events: none; max-width: 260px; padding: 7px 10px; font-size: 0.78rem; line-height: 1.35;
-		background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 14px rgb(0 0 0 / 0.16);
+		background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 14px var(--shadow);
 	}
 	.note {
-		position: absolute; top: 8px; right: 8px; width: 310px; padding: 12px 14px; font-size: 0.92rem; line-height: 1.4;
+		position: absolute; top: 8px; right: 8px; width: min(310px, calc(100% - 316px)); padding: 12px 14px; font-size: 0.92rem; line-height: 1.4;
 		background: var(--surface); border: 1px solid var(--line); border-radius: 10px; opacity: 0; transition: opacity 0.6s ease; pointer-events: none;
 	}
 	.note.on { opacity: 1; }
@@ -198,8 +203,8 @@
 	.chips { display: flex; flex-wrap: wrap; gap: 4px 10px; }
 	.sw { display: inline-flex; align-items: center; gap: 5px; }
 	.chip { width: 13px; height: 13px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
-	.chip.hatched { background: repeating-linear-gradient(45deg, var(--ink-3) 0 1.5px, var(--surface-2) 1.5px 4px); }
-	.size { fill: var(--ink-3); fill-opacity: 0.35; stroke: var(--ink-3); }
+	.chip.hatched { background: repeating-linear-gradient(135deg, var(--ink-3) 0 1.5px, var(--surface-2) 1.5px 4px); }
+	.size { fill: none; stroke: var(--ink-2); stroke-width: 1.2; }
 	text { fill: var(--ink-2); font-size: 10.5px; }
 	@media (prefers-reduced-motion: reduce) {
 		.cell, .dot, .prio, .note, .ramp { transition: none; }

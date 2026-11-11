@@ -65,10 +65,10 @@
 	.phone.on { opacity: 1; transform: none; }
 	img {
 		display: block; width: 100%; height: auto; aspect-ratio: 560 / 644; object-fit: cover; object-position: top;
-		border: 5px solid #1c1c1b; border-radius: 28px; background: #fff; box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+		border: 5px solid #1c1c1b; border-radius: 28px; background: #fff; box-shadow: 0 8px 24px var(--shadow);
 	}
 	.name { margin: 10px 0 0; font-family: var(--font-title); font-weight: 700; font-size: 1rem; line-height: 1.2; }
-	.src { margin: 2px 0 0; color: var(--ink-3); font-size: 0.78rem; }
+	.src { margin: 2px 0 0; color: var(--ink-2); font-size: 0.78rem; }
 	.chip {
 		display: inline-block; margin: 6px 0 0; padding: 3px 9px; font-size: 0.74rem; line-height: 1.3; color: var(--ink-2);
 		border: 1px solid var(--line); border-radius: 10px; background: var(--surface);

@@ -2,6 +2,7 @@
 	import * as d3 from 'd3';
 	import { fmtAcres, fmtCompact, fmtInt } from './format.js';
 	import { GROUPS, groupOf, groupCss } from './colors.js';
+	import Hint from './Hint.svelte';
 
 	// One dot per space, in one stripe per city. `layout` 'size' orders the dots by area (log axis);
 	// 'access' by the people living within 500 m, and the dots glide between the two.
@@ -124,9 +125,7 @@
 </script>
 
 <div class="wrap" bind:this={wrap}>
-	<p class="status" aria-live="polite">
-		Showing <strong>{activeCount}</strong> of {model.nodes.length} spaces. Hover a dot for details; click a type below to hide or show it.
-	</p>
+	<Hint>Hover a dot for details. Click a type below to hide or show it.</Hint>
 
 	<svg
 		bind:this={svg}
@@ -218,21 +217,22 @@
 		{/each}
 		<span class="lg"><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" class="dot private" style:--c="var(--ink-2)" /></svg>Hollow = private or nonprofit, open to the public</span>
 		<span class="lg">
-			Dot area = area of the space (the smallest are enlarged to stay visible)
-			<svg width="96" height="42" aria-hidden="true">
-				{#each [1, 10, 100] as ac, i (ac)}
-					<circle cx={14 + i * 32} cy="21" r={model.r(ac * 4046.86)} class="size" />
+			Dot area = area of the space
+			<svg width="88" height="34" aria-hidden="true">
+				{#each [1, 10, 50] as ac, i (ac)}
+					<circle cx={12 + i * 30} cy="17" r={model.r(ac * 4046.86)} class="size" />
 				{/each}
 			</svg>
-			1 · 10 · 100 ac
+			1 · 10 · 50 ac
 		</span>
+		<span class="count" aria-live="polite">Showing <strong>{activeCount}</strong> of {model.nodes.length}</span>
 	</div>
 </div>
 
 <style>
 	.wrap { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; gap: 6px; }
 	svg { width: 100%; flex: 1; min-height: 0; display: block; }
-	.status { margin: 0; font-size: 0.82rem; color: var(--ink-2); }
+	.count { margin-left: auto; }
 	.axis { opacity: 0; transition: opacity 0.8s ease; }
 	.axis.on { opacity: 1; }
 	.grid { stroke: var(--line); stroke-width: 1; }
@@ -241,7 +241,7 @@
 	.tick { fill: var(--ink-3); font-size: 12px; }
 	.title { fill: var(--ink-2); font-size: 13px; }
 	.row-label { fill: var(--ink); font-size: 16px; font-weight: 700; font-family: var(--font-title); }
-	.row-sub { fill: var(--ink-3); font-size: 11.5px; }
+	.row-sub { fill: var(--ink-2); font-size: 11.5px; }
 	.dot { transition: transform 1.6s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.6s ease; stroke-width: 1.2; }
 	.dot.public { fill: var(--c); stroke: var(--surface); fill-opacity: 0.85; }
 	.dot.private { fill: var(--surface); stroke: var(--c); stroke-width: 1.6; }
@@ -260,11 +260,11 @@
 	.tip {
 		position: absolute; pointer-events: none; z-index: 3; width: max-content; max-width: 260px; padding: 8px 10px;
 		background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
-		box-shadow: 0 4px 14px rgb(0 0 0 / 0.15); font-size: 0.8rem; line-height: 1.35;
+		box-shadow: 0 4px 14px var(--shadow); font-size: 0.8rem; line-height: 1.35;
 	}
 	.t-sub { color: var(--ink-2); }
 	.note {
-		position: absolute; top: 34px; right: 12px; width: 300px; padding: 12px 14px; font-size: 0.92rem; line-height: 1.4;
+		position: absolute; top: 8px; right: 12px; width: min(300px, calc(100% - 330px)); padding: 12px 14px; font-size: 0.92rem; line-height: 1.4;
 		background: var(--surface); border: 1px solid var(--line); border-radius: 10px; opacity: 0; transition: opacity 0.6s ease;
 		pointer-events: none;
 	}

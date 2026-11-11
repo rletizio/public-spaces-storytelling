@@ -182,13 +182,13 @@ Links: Crimson https://www.thecrimson.com/article/2026/4/6/kiosk-city-council-qu
 
 ### Scene 5. Chances are, it is small (Rising)
 
-**Text:** Chances are, it is small. For two in three residents, the nearest public space is under 5 acres. For nearly half, it is under one. For one in five, the nearest is a park of 10 acres or more.
+**Text (card):** Chances are, it is small. Take the public space closest to where each resident lives. For most people, it is a small one.
 
-**Visual:** New. One horizontal stacked bar of residents by the size of their nearest space: under 1 acre 47%, 1 to 5 acres 19%, 5 to 10 acres 13%, 10 acres or more 21%. The map behind fades to very light colors.
+**Visual:** One horizontal stacked bar of residents by the size of their nearest space: under 1 acre 47%, 1 to 5 acres 19%, 5 to 10 acres 13%, 10 acres or more 21%. Each part carries its own label and percentage. One bracket over the first two parts gives the only figure the bar does not show directly: 66%, two in three residents, have a nearest space under 5 acres.
 
-**Motion:** The map fades; the bar appears in front and fills left to right, tied to scroll progress.
+**Motion:** The map from scene 4 fades out completely; the bar appears and fills left to right with scroll progress. The bar is complete a little before the middle of the scene; the bracket then appears at the halfway point, like the other highlights.
 
-**Data:** Nearest space to each census-block point, by area. 66% under 5 acres, 47% under 1 acre, 21% at 10 acres or more; the 5 to 10 acre share (13%) is the remainder. **[check]** that the numbers hold after the pipeline is rewritten into `story_stats.py`.
+**Data:** Nearest space to each census-block point, by area, weighted by 2020 population (`scripts/story_stats.py`). The 5 to 10 acre share (13%) is the remainder.
 
 ### Scene 6. Order by size (Rising)
 
@@ -254,7 +254,7 @@ Links: Crimson https://www.thecrimson.com/article/2026/4/6/kiosk-city-council-qu
 
 **Definition (on screen, small):** A priority cell has 1,000 or more residents per acre of public space, counting the cell and its neighbours, and has no space of 10 acres or more within 1,000 m of the cell center.
 
-**Data (1,000 m):** 64 cells, 71,673 residents, 8.2% of residents. Boston 50 cells (45,167 residents, 6.5% of Boston), Cambridge 4 cells (10,113 residents, 8.1%), Somerville 10 cells (16,393 residents, 27.1%). For comparison, at 800 m there were 101 cells and 15% of residents. **[check]**
+**Data (1,000 m):** 51 cells, 71,655 residents, 8.2% of residents. Boston 38 cells (45,155 residents, 6.5% of Boston), Cambridge 4 cells (10,113 residents, 8.1%), Somerville 9 cells (16,387 residents, 27.0%). Cells with fewer than 10 residents count as uninhabited (the airport and harbor cells get about one resident each from large census blocks); without that rule the count was 64 cells. For comparison, at 800 m there were 101 cells and 15% of residents. **[check]**
 
 Notes: "Large park" means a space of 10 acres or more. Boston and Cambridge school grounds are mostly closed to the public and are not counted; Somerville schoolyards and libraries are counted because they are open. Residents-only counts understate pressure around downtown.
 
@@ -272,7 +272,7 @@ Notes: "Large park" means a space of 10 acres or more. Boston and Cambridge scho
 
 **Motion:** Each column appears with a short delay. An **Explore again** button scrolls back to scene 4.
 
-**Optional line (owner to decide):** Bringing the 64 priority cells to 500 residents per acre of public space would take about 108 more acres, roughly 220 half-acre parks. Bringing them to 300 would take about 200 acres. Estimate: for each priority cell, residents divided by the target, minus the acres already there, summed. Pocket parks alone are unlikely to be enough; schoolyards, street plazas and reclaimed street space would be part of the mix. **[check]** before use; it is a rough estimate.
+**Optional line (owner to decide):** Bringing the 51 priority cells to 500 residents per acre of public space would take about 108 more acres, roughly 220 half-acre parks. Bringing them to 300 would take about 200 acres. Estimate: for each priority cell, residents divided by the target, minus the acres already there, summed. Pocket parks alone are unlikely to be enough; schoolyards, street plazas and reclaimed street space would be part of the mix. **[check]** before use; it is a rough estimate.
 
 ---
 
@@ -292,7 +292,7 @@ Notes: "Large park" means a space of 10 acres or more. Boston and Cambridge scho
 | 9 | Spaces per km², 0 to 1.5 km and over 8 km from the Common | 21 and 4 | Spaces by centroid |
 | 9 | Boston public-space area south or southwest of the Common | 66% (45% and 21%) | Compass sectors from the Common |
 | 9 | Cells under 100 and over 3,000 residents per acre | 139 and 41 | Cell plus neighbours |
-| 10 | Residents in priority cells | 71,673 (8.2%) | 1,000 m, 1,000 residents per acre |
+| 10 | Residents in priority cells | 71,655 (8.2%) | 1,000 m, 1,000 residents per acre |
 | 10 | By city | Somerville 27%, Cambridge 8%, Boston 7% | |
 | 12 | Extra acres for 500 residents per acre | about 108 | Optional |
 

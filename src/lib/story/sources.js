@@ -41,7 +41,7 @@ export const sources = {
 	},
 	people: {
 		data: 'A grid of 500 m cells; each cell’s residents are the 2020 census blocks split by the share of each block inside the cell.',
-		method: 'Residents per acre counts the cell and its eight neighbours (about 1.5 km square) against the public space in them. “Downtown” is the center of Boston Common; south and southwest are approximate compass sectors.'
+		method: 'Residents per acre counts the cell and its eight neighbours (about 1.5 km square) against the public space in them. “Downtown” is the center of Boston Common; south and southwest are approximate compass sectors. Cells with fewer than 10 residents count as uninhabited: large census blocks such as the airport and the harbor would otherwise give each cell about one resident.'
 	},
 	priority: {
 		data: 'Priority cells: 1,000 or more residents per acre of public space (cell and neighbours) and no space of 10 acres or more within 1,000 m of the cell center.',

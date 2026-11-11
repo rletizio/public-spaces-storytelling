@@ -114,7 +114,7 @@
 				<NewsPhones spaces={data.spaces} progress={active === NEWS ? progress : 0} />
 			</div>
 			<div class="full"><StageText kind="journey" on={active === JOURNEY} /></div>
-			<div class="maplayer" class:on={active === OVERVIEW || active === EXPLORE || active === SMALL} class:faint={active === SMALL}>
+			<div class="maplayer" class:on={active === OVERVIEW || active === EXPLORE}>
 				<StoryMap
 					spaces={data.spaces}
 					boundaries={data.boundaries}
@@ -123,7 +123,11 @@
 				/>
 			</div>
 			<div class="maplayer center" class:on={active === SMALL}>
-				<NearestBar stats={data.story} fill={active === SMALL ? Math.min(1, Math.max(0, (progress - 0.05) / 0.5)) : 0} />
+				<NearestBar
+					stats={data.story}
+					fill={active === SMALL ? Math.min(1, Math.max(0, (progress - 0.05) / 0.4)) : 0}
+					show={active === SMALL && half}
+				/>
 			</div>
 			<div class="maplayer" class:on={active === ORDER || active === ACCESS}>
 				<DotPlot
@@ -133,7 +137,7 @@
 					show={progress >= 0.5}
 				/>
 			</div>
-			<div class="maplayer center" class:on={active === HISTORY}>
+			<div class="maplayer" class:on={active === HISTORY}>
 				<OwnershipTimeline spaces={bostonSpaces} show={active === HISTORY && half} necklace={NECKLACE} />
 			</div>
 			<div class="maplayer" class:on={active === PEOPLE || active === PRIORITY || active === WHYTE} class:faint={active === WHYTE}>

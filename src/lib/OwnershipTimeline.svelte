@@ -3,6 +3,7 @@
 	import { sankey, sankeyLinkHorizontal } from 'd3-sankey';
 	import { OWNERS, CATEGORIES, ownerCss } from './colors.js';
 	import { fmtInt } from './format.js';
+	import Hint from './Hint.svelte';
 
 	// necklace: { ids, label } spaces to outline in the timeline once `show` is true (with the 1875-1900 band).
 	// Clicking an owner, a type or a flow dims everything else; click again to clear.
@@ -28,7 +29,7 @@
 
 	function build(spaces, necklace) {
 		const feats = spaces.features.map((f) => f.properties);
-		const keys = OWNERS.map((o) => o.key);
+		const keys = OWNERS.map((o) => o.key).filter((k) => feats.some((d) => d.owner === k));
 		const dated = feats.filter((d) => d.year != null);
 		const undated = feats.filter((d) => d.year == null);
 
@@ -40,19 +41,28 @@
 
 		const sum = (arr, k) => d3.sum(arr.filter((d) => d.owner === k), (d) => d.area_acres);
 		const undatedBy = Object.fromEntries(keys.map((k) => [k, sum(undated, k)]));
+		const datedBy = Object.fromEntries(keys.map((k) => [k, sum(dated, k)]));
 		const datedTotal = d3.sum(dated, (d) => d.area_acres);
 		const undatedTotal = d3.sum(undated, (d) => d.area_acres);
 
 		const x = d3.scaleLinear().domain([START, END]).range([X0, X1]);
-		const y = d3.scaleLinear().domain([0, Math.max(datedTotal, undatedTotal)]).nice().range([BOT, TOP]);
+		const y = d3.scaleLinear().domain([0, datedTotal + undatedTotal]).nice().range([BOT, TOP]);
 
 		const area = d3.area().x((d) => x(d.data.year)).y0((d) => y(d[0])).y1((d) => y(d[1])).curve(d3.curveStepAfter);
 		const layers = series.map((s) => ({ key: s.key, d: area(s) }));
 
+		// the bar: all land by owner on the same acres axis; solid = year known, hatched = no year recorded
 		let acc = 0;
-		const undatedSegs = keys.map((k) => {
-			const seg = { key: k, y0: y(acc), y1: y(acc + undatedBy[k]), acres: undatedBy[k] };
-			acc += undatedBy[k];
+		const barSegs = keys.map((k) => {
+			const d = datedBy[k];
+			const u = undatedBy[k];
+			const seg = {
+				key: k,
+				dated: { y0: y(acc), y1: y(acc + d), acres: d },
+				undated: { y0: y(acc + d), y1: y(acc + d + u), acres: u },
+				span: { top: y(acc + d + u), bottom: y(acc) }
+			};
+			acc += d + u;
 			return seg;
 		});
 
@@ -79,12 +89,35 @@
 				const sub = feats.filter((d) => d.owner === k && d.category === c);
 				if (sub.length) links.push({ source: keys.indexOf(k), target: keys.length + catOrder.indexOf(c), value: d3.sum(sub, (d) => d.area_acres), n: sub.length });
 			}
-		const graph = sankey()
+		// The owner nodes use the same acres-to-pixels scale as the bar and sit exactly beside its blocks, so the
+		// two show the same sizes. The extent is chosen so the layout's scale equals the bar's.
+		const PAD = 15;
+		const pxPerAcre = y(0) - y(1);
+		const totalAcres = datedTotal + undatedTotal;
+		const colMax = Math.max(keys.length, catOrder.length);
+		const sk = sankey()
 			.nodeWidth(12)
-			.nodePadding(15)
-			.extent([[SX0, TOP], [SX1, BOT]])
+			.nodePadding(PAD)
+			.extent([[SX0, TOP], [SX1, TOP + pxPerAcre * totalAcres + PAD * (colMax - 1)]])
 			.nodeAlign((n) => (n.kind === 'owner' ? 0 : 1))
-			.nodeSort((a, b) => a.order - b.order)({ nodes, links });
+			.nodeSort((a, b) => a.order - b.order);
+		const graph = sk({ nodes, links });
+		const span = new Map(barSegs.map((b) => [b.key, b.span]));
+		for (const n of graph.nodes) {
+			if (n.kind !== 'owner') continue;
+			n.y0 = span.get(n.name).top;
+			n.y1 = span.get(n.name).bottom;
+		}
+		sk.update(graph);
+		// owner labels: next to their node, nudged apart where the small blocks are too close for the text
+		const ownerSorted = graph.nodes.filter((n) => n.kind === 'owner').sort((a, b) => a.y0 - b.y0);
+		const labelY = new Map();
+		let prevY = -Infinity;
+		for (const n of ownerSorted) {
+			const ly = Math.max((n.y0 + n.y1) / 2, prevY + 13);
+			labelY.set(n.name, ly);
+			prevY = ly;
+		}
 
 		const ownerNodes = new Map(graph.nodes.filter((n) => n.kind === 'owner').map((n) => [n.name, n]));
 		const catNodes = new Map(graph.nodes.filter((n) => n.kind === 'cat').map((n) => [n.name, n]));
@@ -98,7 +131,9 @@
 			x,
 			y,
 			layers,
-			undatedSegs,
+			owners: OWNERS.filter((o) => keys.includes(o.key)),
+			barSegs,
+			labelY,
 			datedTotal,
 			undatedTotal,
 			nDated: dated.length,
@@ -208,48 +243,30 @@
 			]
 		});
 	}
-	function tipUndated(e, s) {
+	function tipBar(e, s) {
 		place(e, {
-			title: `${ownerLabel[s.key]} · no year recorded`,
-			rows: [{ label: 'Area', value: `${fmtInt(s.acres)} ac` }]
+			title: ownerLabel[s.key],
+			rows: [
+				{ label: 'Year known', value: `${fmtInt(s.dated.acres)} ac` },
+				{ label: 'No year recorded', value: `${fmtInt(s.undated.acres)} ac` },
+				{ label: 'Total', value: `${fmtInt(s.dated.acres + s.undated.acres)} ac`, bold: true }
+			]
 		});
 	}
 
 	const yearX = $derived(hovered?.year != null ? model.x(hovered.year) : null);
-	const hovUndated = $derived(hovered && hovered.year == null ? model.undatedSegs.find((s) => s.key === hovered.owner) : null);
 </script>
 
 <div class="wrap" bind:this={wrap}>
 
-	<div class="owners" role="group" aria-label="Filter by owner">
-		<span class="lgt">Owner</span>
-		{#each OWNERS as o (o.key)}
-			<button
-				class="chip"
-				class:on={filter.owner === o.key}
-				class:dim={filter.owner && filter.owner !== o.key}
-				aria-pressed={filter.owner === o.key}
-				onclick={() => toggleOwner(o.key)}
-			>
-				<span class="sw" style:background={o.css}></span>{o.label}
-			</button>
-		{/each}
-		{#if filter.owner || filter.category}
-			<button class="chip clear" onclick={() => onfilter({ owner: null, category: null })}>Clear filter</button>
-		{/if}
+	<div class="top">
+		<Hint>Hover the layers for the area in any year. Click an owner, a type or a flow to highlight it; click again to clear.</Hint>
 	</div>
 
-	<p class="status" aria-live="polite">
-		{#if show && necklace && model.necklaceD}
-			<strong>{necklace.label}</strong> (outlined): {fmtInt(model.nkAcres)} acres, {Math.round(model.nkShare * 100)}% of the area acquired between 1875 and 1900.
-		{:else if hovered}
-			<strong>{hovered.name}</strong> · {hovered.city} · {ownerLabel[hovered.owner]} · {hovered.category} ·
-			{hovered.year != null ? `acquired ${hovered.year}` : 'no acquisition year on record'}
-		{:else}
-			{fmtInt(model.nDated)} of {model.total} spaces ({fmtInt(model.datedTotal)} of {fmtInt(model.totalAcres)} acres) have a recorded
-			acquisition year, all in Boston.
-		{/if}
-	</p>
+	<div class="callout" class:on={show && necklace && model.necklaceD}>
+		<strong>{necklace?.label}</strong> (outlined): {fmtInt(model.nkAcres)} acres, {Math.round(model.nkShare * 100)}% of the area acquired
+		between 1875 and 1900.
+	</div>
 
 	<svg
 		bind:this={svg}
@@ -267,10 +284,10 @@
 		<!-- panel titles -->
 		<text class="panel" x={X0} y="20">Area acquired over time</text>
 		<text class="panel-sub" x={X0} y="35">Cumulative acres, by owner · Boston</text>
-		<text class="panel" x={BAR0 - 4} y="20">No year</text>
-		<text class="panel-sub" x={BAR0 - 4} y="35">recorded</text>
-		<text class="panel" x={SX0 - 40} y="20">Owner → type of space</text>
-		<text class="panel-sub" x={SX0 - 40} y="35">All {model.total} spaces · acres</text>
+		<text class="panel" x={BAR0 - 4} y="20">All land</text>
+		<text class="panel-sub" x={BAR0 - 4} y="35">hatched = no year</text>
+		<text class="panel" x={SX0 - 24} y="20">Owner → type of space</text>
+		<text class="panel-sub" x={SX0 - 24} y="35">All {model.total} spaces · acres</text>
 
 		<!-- axes -->
 		{#each model.yTicks as t (t)}
@@ -320,39 +337,52 @@
 			{#if model.necklaceD}<path class="nk" d={model.necklaceD} />{/if}
 		</g>
 
-		<!-- undated bar -->
-		{#each model.undatedSegs as s (s.key)}
-			{#if s.acres > 0}
-				<g
-					class="seg"
-					class:dim={!ownerOn(s.key)}
-					role="button"
-					tabindex="0"
-					aria-pressed={filter.owner === s.key}
-					aria-label="{ownerLabel[s.key]}, no year recorded: filter by this owner"
-					onpointerenter={(e) => {
-						local = { owner: s.key };
-						tipUndated(e, s);
-					}}
-					onpointermove={(e) => tipUndated(e, s)}
-					onpointerleave={() => {
-						local = null;
-						tt = null;
-					}}
-					onclick={() => toggleOwner(s.key)}
-					onkeydown={key(() => toggleOwner(s.key))}
-				>
-					<rect x={BAR0} y={s.y1} width={BAR1 - BAR0} height={Math.max(0.5, s.y0 - s.y1)} style:fill={ownerCss[s.key]} />
-					<rect x={BAR0} y={s.y1} width={BAR1 - BAR0} height={Math.max(0.5, s.y0 - s.y1)} fill="url(#hatch)" />
-					{#if filter.owner === s.key}
-						<rect class="outline" x={BAR0} y={s.y1} width={BAR1 - BAR0} height={Math.max(0.5, s.y0 - s.y1)} />
-					{/if}
-				</g>
-			{/if}
+		<!-- bar: all land by owner (solid = year known, hatched = no year recorded) -->
+		{#each model.barSegs as s (s.key)}
+			<g
+				class="seg"
+				class:dim={!ownerOn(s.key)}
+				role="button"
+				tabindex="0"
+				aria-pressed={filter.owner === s.key}
+				aria-label="{ownerLabel[s.key]}, all land: filter by this owner"
+				onpointerenter={(e) => {
+					local = { owner: s.key };
+					tipBar(e, s);
+				}}
+				onpointermove={(e) => tipBar(e, s)}
+				onpointerleave={() => {
+					local = null;
+					tt = null;
+				}}
+				onclick={() => toggleOwner(s.key)}
+				onkeydown={key(() => toggleOwner(s.key))}
+			>
+				{#if s.dated.acres > 0}
+					<rect class="part" x={BAR0} y={s.dated.y1} width={BAR1 - BAR0} height={Math.max(0.5, s.dated.y0 - s.dated.y1)} style:fill={ownerCss[s.key]} />
+				{/if}
+				{#if s.undated.acres > 0}
+					<rect class="part" x={BAR0} y={s.undated.y1} width={BAR1 - BAR0} height={Math.max(0.5, s.undated.y0 - s.undated.y1)} style:fill={ownerCss[s.key]} />
+					<rect x={BAR0} y={s.undated.y1} width={BAR1 - BAR0} height={Math.max(0.5, s.undated.y0 - s.undated.y1)} fill="url(#hatch)" />
+				{/if}
+				{#if filter.owner === s.key}
+					<rect class="outline" x={BAR0} y={s.undated.y1} width={BAR1 - BAR0} height={Math.max(0.5, s.dated.y0 - s.undated.y1)} />
+				{/if}
+			</g>
 		{/each}
-		{#if hovUndated}
-			<text class="mark-label" x={BAR0 + 16} y={Math.max(TOP + 8, hovUndated.y1 - 6)} text-anchor="middle">▼ here</text>
-		{/if}
+
+		<!-- faint bands tie each owner's block in the bar to the same owner in the diagram -->
+		{#each model.barSegs as b (b.key)}
+			<rect
+				class="tie"
+				class:dim={!ownerOn(b.key)}
+				x={BAR1}
+				y={b.span.top}
+				width={SX0 - BAR1}
+				height={Math.max(0.5, b.span.bottom - b.span.top)}
+				style:fill={ownerCss[b.key]}
+			/>
+		{/each}
 
 		<!-- sankey -->
 		<g class="links">
@@ -407,13 +437,33 @@
 				<rect class="hit" x={n.kind === 'owner' ? n.x0 - 78 : n.x0} y={mid - Math.max(h, 14) / 2} width={n.kind === 'owner' ? 90 : 132} height={Math.max(h, 14)} />
 				<rect class="nrect" class:sel x={n.x0} y={n.y0} width={n.x1 - n.x0} height={h} style:fill={n.kind === 'owner' ? ownerCss[n.name] : 'var(--ink-2)'} />
 				{#if n.kind === 'owner'}
-					<text class="nlabel" x={n.x0 - 6} y={mid + 3.5} text-anchor="end">{ownerLabel[n.name]}</text>
+					{@const ly = model.labelY.get(n.name)}
+					{#if Math.abs(ly - mid) > 2}<line class="lead" x1={n.x0 - 5} x2={n.x0} y1={ly} y2={mid} />{/if}
+					<text class="nlabel" x={n.x0 - 6} y={ly + 3.5} text-anchor="end">{ownerLabel[n.name]}</text>
 				{:else}
 					<text class="nlabel" x={n.x1 + 6} y={mid + 3.5}>{catLabel[n.name]}</text>
 				{/if}
 			</g>
 		{/each}
 	</svg>
+
+	<div class="owners" role="group" aria-label="Filter by owner">
+		<span class="lgt">Owner</span>
+		{#each model.owners as o (o.key)}
+			<button
+				class="chip"
+				class:on={filter.owner === o.key}
+				class:dim={filter.owner && filter.owner !== o.key}
+				aria-pressed={filter.owner === o.key}
+				onclick={() => toggleOwner(o.key)}
+			>
+				<span class="sw" style:background={o.css}></span>{o.label}
+			</button>
+		{/each}
+		{#if filter.owner || filter.category}
+			<button class="chip clear" onclick={() => onfilter({ owner: null, category: null })}>Clear filter</button>
+		{/if}
+	</div>
 
 	{#if tt}
 		<div class="tip" style:left="{tt.flip ? tt.left - 14 : tt.left + 14}px" style:top="{tt.top + 14}px" style:transform={tt.flip ? 'translateX(-100%)' : 'none'} role="tooltip">
@@ -428,15 +478,17 @@
 	{/if}
 
 	<p class="note">
-		{fmtInt(model.nUndated)} of these {model.total} Boston spaces have no acquisition year on record (hatched bar), including
-		Jamaica Pond, so they are not in the timeline. Acres are summed over spaces.
+		{fmtInt(model.nDated)} of these {model.total} Boston spaces ({fmtInt(model.datedTotal)} of {fmtInt(model.totalAcres)} acres) have a recorded
+		acquisition year; the other {fmtInt(model.nUndated)}, including Jamaica Pond, are hatched in the bar and are not in the timeline. Acres
+		are summed over spaces.
 	</p>
 </div>
 
 <style>
-	.wrap { position: relative; }
-	svg { width: 100%; height: auto; display: block; overflow: visible; }
-	.owners { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; font-size: 0.8rem; }
+	.wrap { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; gap: 8px; }
+	svg { width: 100%; flex: 1; min-height: 0; display: block; overflow: visible; }
+	.top { display: flex; align-items: flex-start; gap: 16px; }
+	.owners { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 0 4px; font-size: 0.8rem; }
 	.lgt { font-weight: 700; color: var(--ink); margin-right: 2px; }
 	.chip {
 		display: inline-flex; align-items: center; gap: 6px; font: inherit; padding: 3px 10px;
@@ -446,14 +498,23 @@
 	.chip.dim { color: var(--ink-3); }
 	.chip.clear { color: var(--ink-2); border-style: dashed; }
 	.sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-	.status { margin: 0 0 4px; font-size: 0.85rem; color: var(--ink-2); min-height: 2.6em; }
+	.callout {
+		position: absolute; top: 8px; right: 12px; z-index: 2; width: min(300px, calc(100% - 330px)); padding: 12px 14px;
+		font-size: 0.92rem; line-height: 1.4; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+		opacity: 0; transition: opacity 0.6s ease; pointer-events: none;
+	}
+	.callout.on { opacity: 1; }
+	.tie { opacity: 0.13; pointer-events: none; transition: opacity 0.12s; }
+	.tie.dim { opacity: 0.03; }
+	.lead { stroke: var(--ink-3); stroke-width: 0.8; }
+	.part { stroke: var(--surface); stroke-width: 1; }
 	.hl { opacity: 0; transition: opacity 0.7s ease; }
 	.hl.on { opacity: 1; }
 	.band { fill: var(--ink); fill-opacity: 0.07; }
 	.band-label { fill: var(--ink); font-size: 11px; font-weight: 700; }
 	.nk { fill: var(--ink); fill-opacity: 0.28; stroke: var(--ink); stroke-width: 2; }
 	.panel { fill: var(--ink); font-family: var(--font-title); font-weight: 700; font-size: 14px; }
-	.panel-sub { fill: var(--ink-3); font-size: 11px; }
+	.panel-sub { fill: var(--ink-2); font-size: 11px; }
 	.grid { stroke: var(--line); stroke-width: 1; }
 	.base { stroke: var(--ink-3); stroke-width: 1; }
 	.tick { fill: var(--ink-3); font-size: 10.5px; }
@@ -482,12 +543,12 @@
 	.tip {
 		position: absolute; pointer-events: none; z-index: 3; width: max-content; max-width: 260px; padding: 8px 10px;
 		background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
-		box-shadow: 0 4px 14px rgb(0 0 0 / 0.15); font-size: 0.8rem; line-height: 1.35;
+		box-shadow: 0 4px 14px var(--shadow); font-size: 0.8rem; line-height: 1.35;
 	}
 	.row { display: flex; align-items: center; gap: 6px; }
 	.row .lab { color: var(--ink-2); flex: 1; }
 	.row .val { font-variant-numeric: tabular-nums; }
 	.row.bold .lab, .row.bold .val { color: var(--ink); font-weight: 700; }
 	.key { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
-	.note { margin: 8px 0 0; font-size: 0.75rem; color: var(--ink-3); }
+	.note { margin: 8px 0 0; font-size: 0.75rem; color: var(--ink-2); }
 </style>
